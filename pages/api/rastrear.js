@@ -7,7 +7,6 @@ export default async function handler(req, res) {
   const cod = codigo.trim().toUpperCase();
 
   try {
-    // Registra o código
     await fetch("https://api.17track.net/track/v2.2/register", {
       method: "POST",
       headers: { "Content-Type": "application/json", "17token": API_KEY },
@@ -15,10 +14,8 @@ export default async function handler(req, res) {
       signal: AbortSignal.timeout(10000),
     });
 
-    // Aguarda 5 segundos para o 17track buscar os dados
     await new Promise(r => setTimeout(r, 5000));
 
-    // Consulta os dados
     const res2 = await fetch("https://api.17track.net/track/v2.2/gettrackinfo", {
       method: "POST",
       headers: { "Content-Type": "application/json", "17token": API_KEY },
@@ -26,27 +23,32 @@ export default async function handler(req, res) {
       signal: AbortSignal.timeout(10000),
     });
 
-    if (!res2.ok) throw new Error(`17track HTTP ${res2.status}`);
     const data = await res2.json();
-    if (data.code !== 0) throw new Error(`17track erro: ${data.message || data.code}`);
-
     const item = data.data?.accepted?.[0];
-    if (!item) throw new Error("Código não encontrado");
+    if (!item) throw new Error("Código não encontrado: " + JSON.stringify(data.data?.rejected?.[0]));
 
     const track = item.track;
-    const eventos = track?.tracking?.providers?.[0]?.events || track?.events || [];
-    const ul = eventos[0];
 
-    if (!ul) {
+    // Tenta todos os caminhos possíveis para os eventos
+    const eventos =
+      track?.tracking?.providers?.[0]?.events ||
+      track?.tracking?.providers?.[0]?.track_info?.tracking?.providers?.[0]?.events ||
+      track?.events ||
+      track?.trackinfo?.[0]?.tracking_info ||
+      [];
+
+    // Retorna estrutura completa para debug se não achar eventos
+    if (!eventos.length) {
       return res.status(200).json({
-        status: "aguardando",
-        evento: "Aguardando dados do 17track — tente novamente em 1 minuto",
+        status: "desconhecido",
+        evento: "Debug: " + JSON.stringify(Object.keys(track || {})),
         local: null, data: null,
-        resumo: "Seu pedido foi registrado. Consulte novamente em 1 minuto para ver os dados.",
+        resumo: "Debug track keys: " + JSON.stringify(Object.keys(track || {})),
       });
     }
 
-    const descricao = ul.description || ul.detail || "";
+    const ul = eventos[0];
+    const descricao = ul.description || ul.detail || ul.content || "";
     const tag = track?.tag || 0;
     let status = "em_transito";
     if (tag === 70 || descricao.toLowerCase().includes("entregue")) status = "entregue";
@@ -68,7 +70,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ status, evento: descricao, local, data: dataHora, resumo });
 
   } catch (err) {
-    console.error("Erro 17track:", err.message);
     return res.status(500).json({ erro: err.message });
   }
 }
