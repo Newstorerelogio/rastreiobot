@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     });
 
     // Passo 2: Buscar informações do rastreio
-    const res2 = await fetch("https://api.17track.net/track/v2.2/getRealTimeTrackInfo", {
+    const res2 = await fetch("https://api.17track.net/track/v2.2/gettrackinfo", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
