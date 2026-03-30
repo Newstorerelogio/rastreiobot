@@ -19,7 +19,7 @@ export default async function handler(req, res) {
         "Content-Type": "application/json",
         "17token": API_KEY,
       },
-      body: JSON.stringify([{ number: cod }]),
+      body: JSON.stringify([{ number: cod, carrier: 3031 }]),
       signal: AbortSignal.timeout(10000),
     });
 
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
         "Content-Type": "application/json",
         "17token": API_KEY,
       },
-      body: JSON.stringify([{ number: cod }]),
+      body: JSON.stringify([{ number: cod, carrier: 3031 }]),
       signal: AbortSignal.timeout(10000),
     });
 
