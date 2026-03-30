@@ -22,6 +22,14 @@ export default async function handler(req, res) {
       body: JSON.stringify([{ number: cod }]),
       signal: AbortSignal.timeout(10000),
     });
+await new Promise(r => setTimeout(r, 4000));
+```
+
+Ficando assim entre as linhas 24 e 26:
+```
+    });
+
+    await new Promise(r => setTimeout(r, 4000));
 
     // Passo 2: Buscar informações do rastreio
     const res2 = await fetch("https://api.17track.net/track/v2.2/gettrackinfo", {
