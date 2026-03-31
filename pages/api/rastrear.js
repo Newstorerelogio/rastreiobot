@@ -7,15 +7,7 @@ export default async function handler(req, res) {
   const cod = codigo.trim().toUpperCase();
 
   try {
-    await fetch("https://api.17track.net/track/v2.2/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "17token": API_KEY },
-      body: JSON.stringify([{ number: cod }]),
-      signal: AbortSignal.timeout(10000),
-    });
-
-    await new Promise(r => setTimeout(r, 5000));
-
+    // Tenta buscar via 17track retornando resposta bruta para debug
     const res2 = await fetch("https://api.17track.net/track/v2.2/gettrackinfo", {
       method: "POST",
       headers: { "Content-Type": "application/json", "17token": API_KEY },
@@ -24,50 +16,12 @@ export default async function handler(req, res) {
     });
 
     const data = await res2.json();
-    const item = data.data?.accepted?.[0];
-    if (!item) throw new Error("Código não encontrado: " + JSON.stringify(data.data?.rejected?.[0]));
-
-    const track = item.track;
-
-    // Tenta todos os caminhos possíveis para os eventos
-    const eventos =
-      track?.tracking?.providers?.[0]?.events ||
-      track?.tracking?.providers?.[0]?.track_info?.tracking?.providers?.[0]?.events ||
-      track?.events ||
-      track?.trackinfo?.[0]?.tracking_info ||
-      [];
-
-    // Retorna estrutura completa para debug se não achar eventos
-    if (!eventos.length) {
-      return res.status(200).json({
-        status: "desconhecido",
-        evento: "Debug: " + JSON.stringify(Object.keys(track || {})),
-        local: null, data: null,
-        resumo: "Debug track keys: " + JSON.stringify(Object.keys(track || {})),
-      });
-    }
-
-    const ul = eventos[0];
-    const descricao = ul.description || ul.detail || ul.content || "";
-    const tag = track?.tag || 0;
-    let status = "em_transito";
-    if (tag === 70 || descricao.toLowerCase().includes("entregue")) status = "entregue";
-    else if (tag === 50 || descricao.toLowerCase().includes("saiu para entrega")) status = "saiu_entrega";
-    else if (tag === 60 || tag === 65) status = "problema";
-    else if (tag === 10 || tag === 20) status = "aguardando";
-
-    const local = [ul.location, ul.country].filter(Boolean).join(", ") || null;
-    const dataHora = ul.time ? ul.time.replace("T", " ").slice(0, 16) : null;
-    const labels = { entregue:"Entregue", saiu_entrega:"Saiu p/ entrega", em_transito:"Em trânsito", aguardando:"Aguardando", problema:"Problema" };
-
-    let resumo;
-    if (status === "entregue") resumo = "Seu pedido foi entregue com sucesso! 🎉";
-    else if (status === "saiu_entrega") resumo = "Seu pedido saiu para entrega hoje! 📬";
-    else if (status === "problema") resumo = `Houve um problema: ${descricao}.`;
-    else if (local) resumo = `Seu pedido está em ${local} — ${labels[status]}.`;
-    else resumo = `Status: ${labels[status] || descricao}.`;
-
-    return res.status(200).json({ status, evento: descricao, local, data: dataHora, resumo });
+    
+    // Retorna resposta completa para debug
+    return res.status(200).json({ 
+      debug: true,
+      raw: JSON.stringify(data).slice(0, 2000)
+    });
 
   } catch (err) {
     return res.status(500).json({ erro: err.message });
