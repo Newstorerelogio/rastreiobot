@@ -41,4 +41,4 @@ export default async function handler(req, res) {
     else if (statusRaw.includes("undelivered") || statusRaw.includes("exception")) status = "problema";
     else if (statusRaw.includes("inforeceived") || statusRaw.includes("notfound")) status = "aguardando";
 
-    const labels = { entregue:"Entregue", saiu_entrega:"Saiu p/ entrega", em_transito:"Em trânsito", aguardando:"Aguardand
+    const labels = { entregue:"Entregue", saiu_entrega:"Saiu p/ entrega", em_transito:"Em transito", aguardando:"Aguardando" };
